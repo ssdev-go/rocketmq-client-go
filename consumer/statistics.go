@@ -24,8 +24,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/apache/rocketmq-client-go/v2/primitive"
-	"github.com/apache/rocketmq-client-go/v2/rlog"
+	"github.com/ssdev-go/rocketmq-client-go/primitive"
+	"github.com/ssdev-go/rocketmq-client-go/rlog"
 )
 
 var (

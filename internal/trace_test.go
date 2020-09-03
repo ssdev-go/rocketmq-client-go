@@ -20,8 +20,8 @@ package internal
 import (
 	"testing"
 
-	"github.com/apache/rocketmq-client-go/v2/primitive"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/ssdev-go/rocketmq-client-go/primitive"
 	"github.com/stretchr/testify/assert"
 )
 

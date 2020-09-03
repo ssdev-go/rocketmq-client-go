@@ -1,4 +1,4 @@
-module github.com/apache/rocketmq-client-go/v2
+module github.com/ssdev-go/rocketmq-client-go
 
 require (
 	github.com/emirpasic/gods v1.12.0

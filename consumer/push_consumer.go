@@ -197,8 +197,10 @@ func (pc *pushConsumer) Start() error {
 	for k := range pc.subscribedTopic {
 		_, exist := pc.topicSubscribeInfoTable.Load(k)
 		if !exist {
-			pc.client.Shutdown()
-			return fmt.Errorf("the topic=%s route info not found, it may not exist", k)
+			//pc.client.Shutdown()
+			rlog.Error("the topic=%s route info not found, it may not exist", map[string]interface{}{
+				rlog.LogKeyTopic: k,
+			})
 		}
 	}
 	pc.client.CheckClientInBroker()

@@ -80,6 +80,7 @@ func NewPullConsumer(options ...Option) (*defaultPullConsumer, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "new Namesrv failed.")
 	}
+
 	defaultOpts.Namesrv = srvs
 	dc := &defaultConsumer{
 		client:        internal.GetOrNewRocketMQClient(defaultOpts.ClientOptions, nil),

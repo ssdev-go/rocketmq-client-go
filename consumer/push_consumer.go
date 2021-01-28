@@ -197,10 +197,8 @@ func (pc *pushConsumer) Start() error {
 	for k := range pc.subscribedTopic {
 		_, exist := pc.topicSubscribeInfoTable.Load(k)
 		if !exist {
-			//pc.client.Shutdown()
-			rlog.Error("the topic=%s route info not found, it may not exist", map[string]interface{}{
-				rlog.LogKeyTopic: k,
-			})
+			pc.client.Shutdown()
+			return fmt.Errorf("the topic=%s route info not found, it may not exist", k)
 		}
 	}
 	pc.client.CheckClientInBroker()
@@ -224,9 +222,11 @@ func (pc *pushConsumer) Shutdown() error {
 
 func (pc *pushConsumer) Subscribe(topic string, selector MessageSelector,
 	f func(context.Context, ...*primitive.MessageExt) (ConsumeResult, error)) error {
-	if atomic.LoadInt32(&pc.state) != int32(internal.StateCreateJust) {
-		return errors.New("subscribe topic only started before")
+	if atomic.LoadInt32(&pc.state) == int32(internal.StateStartFailed) ||
+		atomic.LoadInt32(&pc.state) == int32(internal.StateShutdown) {
+		return errors.New("cannot subscribe topic since client either failed to start or has been shutdown.")
 	}
+
 	if pc.option.Namespace != "" {
 		topic = pc.option.Namespace + "%" + topic
 	}
@@ -465,6 +465,12 @@ func (pc *pushConsumer) pullMessage(request *PullRequest) {
 				return
 			default:
 				pc.submitToConsume(request.pq, request.mq)
+				if request.pq.IsDroppd() {
+					rlog.Info("push consumer quit pullMessage for dropped queue.", map[string]interface{}{
+						rlog.LogKeyConsumerGroup: pc.consumerGroup,
+					})
+					return
+				}
 			}
 		}
 	})
@@ -516,7 +522,7 @@ func (pc *pushConsumer) pullMessage(request *PullRequest) {
 					"PullThresholdForQueue": pc.option.PullThresholdForQueue,
 					"minOffset":             pq.Min(),
 					"maxOffset":             pq.Max(),
-					"count":                 pq.msgCache,
+					"count":                 pq.cachedMsgCount,
 					"size(MiB)":             cachedMessageSizeInMiB,
 					"flowControlTimes":      pc.queueFlowControlTimes,
 					rlog.LogKeyPullRequest:  request.String(),
@@ -533,7 +539,7 @@ func (pc *pushConsumer) pullMessage(request *PullRequest) {
 					"PullThresholdSizeForQueue": pc.option.PullThresholdSizeForQueue,
 					"minOffset":                 pq.Min(),
 					"maxOffset":                 pq.Max(),
-					"count":                     pq.msgCache,
+					"count":                     pq.cachedMsgCount,
 					"size(MiB)":                 cachedMessageSizeInMiB,
 					"flowControlTimes":          pc.queueFlowControlTimes,
 					rlog.LogKeyPullRequest:      request.String(),
@@ -707,7 +713,7 @@ func (pc *pushConsumer) pullMessage(request *PullRequest) {
 			time.Sleep(10 * time.Second)
 			pc.storage.update(request.mq, request.nextOffset, false)
 			pc.storage.persist([]*primitive.MessageQueue{request.mq})
-			pc.processQueueTable.Delete(request.mq)
+			pc.processQueueTable.Delete(*request.mq)
 			rlog.Warning(fmt.Sprintf("fix the pull request offset: %s", request.String()), nil)
 		default:
 			rlog.Warning(fmt.Sprintf("unknown pull status: %v", result.Status), nil)

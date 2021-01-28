@@ -5,7 +5,9 @@ this work for additional information regarding copyright ownership.
 The ASF licenses this file to You under the Apache License, Version 2.0
 (the "License"); you may not use this file except in compliance with
 the License.  You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +23,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/apache/rocketmq-client-go/v2/internal/remote"
-	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/ssdev-go/rocketmq-client-go/internal/remote"
+	"github.com/ssdev-go/rocketmq-client-go/primitive"
 )
 
 const (
@@ -37,7 +39,7 @@ var (
 	ErrIllegalIP    = errors.New("IP addr error")
 )
 
-//go:generate mockgen -source namesrv.go -destination mock_namesrv.go -self_package github.com/apache/rocketmq-client-go/v2/internal  --package internal Namesrvs
+//go:generate mockgen -source namesrv.go -destination mock_namesrv.go -self_package github.com/ssdev-go/rocketmq-client-go/internal  --package internal Namesrvs
 type Namesrvs interface {
 	UpdateNameServerAddress()
 
@@ -125,7 +127,10 @@ func (s *namesrvs) getNameServerAddress() string {
 	}
 	index %= len(s.srvs)
 	s.index = index
-	return strings.TrimLeft(addr, "http(s)://")
+	if strings.HasPrefix(addr, "https") {
+		return strings.TrimPrefix(addr, "https://")
+	}
+	return strings.TrimPrefix(addr, "http://")
 }
 
 func (s *namesrvs) Size() int {

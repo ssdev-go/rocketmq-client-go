@@ -23,7 +23,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/ssdev-go/rocketmq-client-go/internal"
 	"github.com/ssdev-go/rocketmq-client-go/internal/remote"
 	"github.com/ssdev-go/rocketmq-client-go/primitive"
@@ -136,7 +135,7 @@ func TestLocalFileOffsetStore(t *testing.T) {
 			offset = localStore.read(mq, _ReadFromStore)
 			So(offset, ShouldEqual, 1)
 
-			delete(localStore.(*localFileOffsetStore).OffsetTable, MessageQueueKey(*mq))
+			localStore.(*localFileOffsetStore).OffsetTable.Delete(MessageQueueKey(*mq))
 			offset = localStore.read(mq, _ReadMemoryThenStore)
 			So(offset, ShouldEqual, 1)
 		})
